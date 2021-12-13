@@ -27,14 +27,14 @@ fun main(args: Array<String>) {
     println("Bye!")
 }
 
-fun buildInvertedIndex(lines: List<String>): Map<String, List<Int>> {
-    val index = mutableMapOf<String, MutableList<Int>>()
+fun buildInvertedIndex(lines: List<String>): Map<String, Set<Int>> {
+    val index = mutableMapOf<String, MutableSet<Int>>()
     for (line in lines.withIndex()) {
         val parts = line.value.split(" ")
         for (part in parts) {
-            val list = index.getOrDefault(part, mutableListOf())
+            val list = index.getOrDefault(part.lowercase(), mutableSetOf())
             list.add(line.index)
-            index[part] = list
+            index[part.lowercase()] = list
         }
     }
     return index
@@ -47,15 +47,48 @@ fun printMenu() {
     println("0. Exit")
 }
 
-fun find(allPeople: List<String>, index: Map<String, List<Int>>) {
-    println("Enter a name or email to search all suitable people.")
-    val query = readLine()!!
+fun find(allPeople: List<String>, index: Map<String, Set<Int>>) {
+    val strategy = getStrategy()
 
-    if (index.containsKey(query)) {
-        val listOfMatches = index[query]
-        listOfMatches?.forEach { println(allPeople[it]) }
+    println("Enter a name or email to search all suitable people.")
+    val queryParts = readLine()!!.split(" ")
+
+    val matchesInIndex = when (strategy) {
+        "ALL" -> {
+            queryParts.map { getFromIndex(index, it) }.reduce { acc, set -> acc.intersect(set).toMutableSet() }
+        }
+        "ANY" -> {
+            queryParts.map { getFromIndex(index, it) }.reduce { acc, set -> acc.union(set).toMutableSet() }
+        }
+        "NONE" -> {
+            var allLines = allPeople.indices.toMutableSet()
+            for (query in queryParts) {
+                allLines = allLines.minus(getFromIndex(index, query)).toMutableSet()
+            }
+            allLines
+        }
+        else -> emptySet()
+    }
+
+    if (matchesInIndex.isNotEmpty()) {
+        matchesInIndex.forEach { println(allPeople[it]) }
     } else {
         println("No matching people found.")
+    }
+}
+
+fun getFromIndex(index: Map<String, Set<Int>>, query: String): Set<Int> {
+    return index[query.lowercase()] ?: emptySet()
+}
+
+fun getStrategy(): String {
+    while (true) {
+        println("Select a matching strategy: ALL, ANY, NONE")
+
+        val strategy = readLine()!!
+        if (strategy in listOf("ALL", "ANY", "NONE")) {
+            return strategy
+        }
     }
 }
 
