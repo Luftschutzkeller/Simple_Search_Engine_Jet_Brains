@@ -1,11 +1,16 @@
 package search
 
-fun main() {
-    println("Enter the number of people:")
-    val numPeople = readLine()!!.toInt()
+import java.io.File
+import kotlin.system.exitProcess
 
-    println("Enter all people:")
-    val allPeople = Array(numPeople) { readLine()!! }
+fun main(args: Array<String>) {
+    if (args.size != 2 || args[0] != "--data") {
+        println("usage: <script> --data <filename>")
+        exitProcess(1)
+    }
+
+    val filename = args[1]
+    val allPeople = File(filename).readLines()
 
     do {
         printMenu()
@@ -28,7 +33,7 @@ fun printMenu() {
     println("0. Exit")
 }
 
-fun find(allPeople: Array<String>) {
+fun find(allPeople: List<String>) {
     println("Enter a name or email to search all suitable people.")
     val query = readLine()!!
 
@@ -40,8 +45,7 @@ fun find(allPeople: Array<String>) {
     }
 }
 
-fun print(allPeople: Array<String>) {
+fun print(allPeople: List<String>) {
     println("=== List of people ===")
     allPeople.forEach { println(it) }
 }
-
